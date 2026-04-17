@@ -32,7 +32,6 @@ import {
 } from "./db";
 import { notifyOwner } from "./_core/notification";
 import { createStripeProductForPdf, updateStripeProduct } from "./stripeProducts";
-import sharp from "sharp";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -122,16 +121,11 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         const matches = input.dataUrl.match(/^data:(.+);base64,(.+)$/);
         if (!matches) throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid image data" });
-        const rawBuffer = Buffer.from(matches[2], "base64");
-
-        // Resize to max 1500px on longest side and convert to WebP
-        const optimizedBuffer = await sharp(rawBuffer)
-          .resize(1500, 1500, { fit: "inside", withoutEnlargement: true })
-          .webp({ quality: 82 })
-          .toBuffer();
-
-        const fileKey = `osmel-photos/${input.type}/${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
-        const { url } = await storagePut(fileKey, optimizedBuffer, "image/webp");
+        const mimeType = matches[1];
+        const buffer = Buffer.from(matches[2], "base64");
+        const ext = input.filename.split(".").pop() ?? "jpg";
+        const fileKey = `osmel-photos/${input.type}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+        const { url } = await storagePut(fileKey, buffer, mimeType);
         await insertPhoto({
           url,
           fileKey,
@@ -373,12 +367,11 @@ export const appRouter = router({
         if (input.coverDataUrl && input.coverFilename) {
           const coverMatches = input.coverDataUrl.match(/^data:(.+);base64,(.+)$/);
           if (coverMatches) {
-            const optimizedCover = await sharp(Buffer.from(coverMatches[2], "base64"))
-              .resize(1500, 1500, { fit: "inside", withoutEnlargement: true })
-              .webp({ quality: 82 })
-              .toBuffer();
-            coverKey = `osmel-covers/${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
-            const result = await storagePut(coverKey, optimizedCover, "image/webp");
+            const coverMime = coverMatches[1];
+            const coverBuffer = Buffer.from(coverMatches[2], "base64");
+            const coverExt = input.coverFilename.split(".").pop() ?? "jpg";
+            coverKey = `osmel-covers/${Date.now()}-${Math.random().toString(36).slice(2)}.${coverExt}`;
+            const result = await storagePut(coverKey, coverBuffer, coverMime);
             coverUrl = result.url;
           }
         }
@@ -469,12 +462,11 @@ export const appRouter = router({
         if (coverDataUrl && coverFilename) {
           const coverMatches = coverDataUrl.match(/^data:(.+);base64,(.+)$/);
           if (coverMatches) {
-            const optimizedCover = await sharp(Buffer.from(coverMatches[2], "base64"))
-              .resize(1500, 1500, { fit: "inside", withoutEnlargement: true })
-              .webp({ quality: 82 })
-              .toBuffer();
-            const coverKey = `osmel-covers/${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
-            const { url: coverUrl } = await storagePut(coverKey, optimizedCover, "image/webp");
+            const coverMimeType = coverMatches[1];
+            const coverBuffer = Buffer.from(coverMatches[2], "base64");
+            const coverExt = coverFilename.split(".").pop() ?? "jpg";
+            const coverKey = `osmel-covers/${Date.now()}-${Math.random().toString(36).slice(2)}.${coverExt}`;
+            const { url: coverUrl } = await storagePut(coverKey, coverBuffer, coverMimeType);
             (data as Record<string, unknown>).coverUrl = coverUrl;
             (data as Record<string, unknown>).coverKey = coverKey;
           }
