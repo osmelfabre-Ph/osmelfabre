@@ -91,22 +91,25 @@ export function registerStripeWebhook(app: Express) {
           return res.json({ received: true });
         }
 
-        // Get the PDF id from metadata, or fall back to latest
-        let pdfId: number | null = null;
-        if (session.metadata?.pdf_id) {
-          pdfId = parseInt(session.metadata.pdf_id);
-        } else {
-          const latest = await getLatestPdf();
-          pdfId = latest?.id ?? null;
-        }
+        const customerEmail = session.customer_details?.email ?? session.customer_email ?? null;
+        const customerName = session.customer_details?.name ?? null;
+        const isWorkshop = !session.metadata?.pdf_id;
 
-        if (!pdfId) {
-          console.error("[Stripe Webhook] No PDF found for session", session.id);
+        if (isWorkshop) {
+          // Workshop payment — no PDF to link, just notify and subscribe
+          if (customerEmail) {
+            await subscribeToMailerLite(customerEmail, customerName);
+          }
+          await notifyOwner({
+            title: `Nuova iscrizione Workshop!`,
+            content: `**Email:** ${customerEmail ?? "—"}\n**Nome:** ${customerName ?? "—"}\n**Sessione Stripe:** ${session.id}`,
+          });
+          console.log(`[Stripe Webhook] Workshop registration recorded for session ${session.id}`);
           return res.json({ received: true });
         }
 
-        const customerEmail = session.customer_details?.email ?? session.customer_email ?? null;
-        const customerName = session.customer_details?.name ?? null;
+        // PDF purchase — find the PDF and record the purchase
+        const pdfId = parseInt(session.metadata!.pdf_id);
 
         await insertPurchase({
           stripeSessionId: session.id,

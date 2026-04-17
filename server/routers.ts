@@ -203,25 +203,25 @@ export const appRouter = router({
           try {
             const session = await stripe.checkout.sessions.retrieve(input.sessionId);
             if (session.payment_status === "paid") {
-              // Determine pdfId from metadata or latest
-              let pdfId: number | null = null;
-              if (session.metadata?.pdf_id) {
-                pdfId = parseInt(session.metadata.pdf_id);
-              } else {
-                const latest = await getLatestPdf();
-                pdfId = latest?.id ?? null;
-              }
-              if (pdfId) {
-                // Register the purchase now (idempotent — webhook may also arrive later)
-                await insertPurchase({
-                  stripeSessionId: session.id,
-                  pdfId,
+              // Workshop payment (no pdf_id in metadata) — verify directly without a DB record
+              if (!session.metadata?.pdf_id) {
+                return {
+                  verified: true,
+                  pdfTitle: null,
+                  pdfUrl: null,
                   customerEmail: session.customer_details?.email ?? session.customer_email ?? null,
-                  customerName: session.customer_details?.name ?? null,
-                  downloadCount: 0,
-                });
-                purchase = await getPurchaseBySessionId(input.sessionId);
+                };
               }
+              // PDF purchase — register and return download info
+              const pdfId = parseInt(session.metadata.pdf_id);
+              await insertPurchase({
+                stripeSessionId: session.id,
+                pdfId,
+                customerEmail: session.customer_details?.email ?? session.customer_email ?? null,
+                customerName: session.customer_details?.name ?? null,
+                downloadCount: 0,
+              });
+              purchase = await getPurchaseBySessionId(input.sessionId);
             }
           } catch (err) {
             console.error("[verifyPurchase] Stripe API fallback failed:", err);
