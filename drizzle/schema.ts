@@ -82,6 +82,7 @@ export const pdfs = mysqlTable("pdfs", {
   stripeProductId: varchar("stripeProductId", { length: 128 }),
   stripePriceId: varchar("stripePriceId", { length: 128 }),
   price: varchar("price", { length: 32 }).default("0"),
+  isFree: boolean("isFree").default(false).notNull(),
   isLatest: boolean("isLatest").default(false).notNull(),
   active: boolean("active").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

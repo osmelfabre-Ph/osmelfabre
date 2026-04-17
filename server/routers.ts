@@ -191,6 +191,24 @@ export const appRouter = router({
       return getLatestPdf();
     }),
 
+    // Public: get download URL for a free PDF (no payment required)
+    downloadFree: publicProcedure
+      .input(z.object({ pdfId: z.number() }))
+      .query(async ({ input }) => {
+        const pdf = await getPdfById(input.pdfId);
+        if (!pdf || !pdf.isFree) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "PDF gratuito non trovato" });
+        }
+        let downloadUrl: string;
+        try {
+          const result = await storageGet(pdf.pdfKey);
+          downloadUrl = result.url;
+        } catch {
+          downloadUrl = pdf.pdfUrl;
+        }
+        return { pdfTitle: pdf.title, pdfUrl: downloadUrl };
+      }),
+
     // Public: verify a Stripe session and return a secure (pre-signed) download URL
     verifyPurchase: publicProcedure
       .input(z.object({ sessionId: z.string() }))
@@ -267,6 +285,7 @@ export const appRouter = router({
           title: z.string().min(1).max(256),
           description: z.string().optional(),
           price: z.string().optional(),
+          isFree: z.boolean().default(false),
           stripePaymentLink: z.string().url().optional().or(z.literal("")),
           isLatest: z.boolean().default(false),
           // PDF file as base64
@@ -335,7 +354,8 @@ export const appRouter = router({
           stripePaymentLink: input.stripePaymentLink || null,
           previewUrl: previewUrl ?? null,
           previewKey: previewKey ?? null,
-          price: input.price ?? "0",
+          price: input.isFree ? "0" : (input.price ?? "0"),
+          isFree: input.isFree ?? false,
           isLatest: false,
           active: true,
         });
@@ -344,12 +364,12 @@ export const appRouter = router({
         const allPdfs = await getAllPdfs();
         const newPdf = allPdfs[0]; // most recent
 
-        // Auto-create Stripe product + payment link if price > 0 and no manual link provided
+        // Auto-create Stripe product + payment link if price > 0, not free, and no manual link provided
         let stripePaymentLink = input.stripePaymentLink || null;
         let stripeProductId: string | null = null;
         let stripePriceId: string | null = null;
 
-        if (newPdf && !stripePaymentLink && input.price && parseFloat(input.price) > 0) {
+        if (newPdf && !stripePaymentLink && !input.isFree && input.price && parseFloat(input.price) > 0) {
           try {
             const origin = input.origin ?? ctx.req.headers.origin ?? "https://osmelfabre.it";
             const priceInCents = Math.round(parseFloat(input.price) * 100);
@@ -480,7 +500,10 @@ export const appRouter = router({
           throw new TRPCError({ code: "NOT_FOUND", message: "PDF non trovato" });
         }
 
-        const stripeLink = pdf.stripePaymentLink ?? "";
+        const origin = process.env.APP_ORIGIN ?? "https://www.osmelfabre.it";
+        const stripeLink = pdf.isFree
+          ? `${origin}/download-free?id=${pdf.id}`
+          : (pdf.stripePaymentLink ?? "");
         const pdfTitle = pdf.title ?? "";
 
         // Aggiorna Bot Field: pdf_acquisto_link (ID: 5006077)

@@ -16,6 +16,7 @@ import Grazie from "@/pages/Grazie";
 import Workshop from "@/pages/Workshop";
 import PaymentSuccess from "@/pages/PaymentSuccess";
 import DownloadSuccess from "@/pages/DownloadSuccess";
+import DownloadFree from "@/pages/DownloadFree";
 import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -49,6 +50,7 @@ function Router() {
         <Route path="/workshop-di-ritratto-maschile.html" component={Workshop} />
         <Route path="/payment/success" component={PaymentSuccess} />
         <Route path="/download-success" component={DownloadSuccess} />
+        <Route path="/download-free" component={DownloadFree} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>

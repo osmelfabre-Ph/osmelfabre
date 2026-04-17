@@ -310,6 +310,7 @@ function PdfManager() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
+  const [isFree, setIsFree] = useState(false);
   const [stripeLink, setStripeLink] = useState("");
   const [isLatest, setIsLatest] = useState(false);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -319,7 +320,7 @@ function PdfManager() {
   const coverRef = useRef<HTMLInputElement>(null);
 
   const resetForm = () => {
-    setTitle(""); setDescription(""); setPrice(""); setStripeLink(""); setIsLatest(false);
+    setTitle(""); setDescription(""); setPrice(""); setIsFree(false); setStripeLink(""); setIsLatest(false);
     setPdfFile(null); setCoverFile(null); setCoverPreview(null);
     setEditingId(null); setShowForm(false);
     if (pdfRef.current) pdfRef.current.value = "";
@@ -397,7 +398,7 @@ function PdfManager() {
       updatePdf.mutate({ id: editingId, title, description: description || undefined, price: price || undefined, stripePaymentLink: stripeLink || undefined, coverDataUrl, coverFilename: coverFile?.name });
     } else {
       if (!pdfDataUrl) { toast.error("Seleziona un file PDF"); return; }
-      uploadPdf.mutate({ title, description: description || undefined, price: price || undefined, stripePaymentLink: stripeLink || undefined, pdfDataUrl, pdfFilename: pdfFile!.name, coverDataUrl, coverFilename: coverFile?.name, origin: window.location.origin, isLatest });
+      uploadPdf.mutate({ title, description: description || undefined, price: isFree ? "0" : (price || undefined), isFree, stripePaymentLink: isFree ? undefined : (stripeLink || undefined), pdfDataUrl, pdfFilename: pdfFile!.name, coverDataUrl, coverFilename: coverFile?.name, origin: window.location.origin, isLatest });
     }
   };
 
@@ -437,10 +438,18 @@ function PdfManager() {
               <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required
                 className="w-full bg-card border border-border text-foreground font-['Jost'] text-sm px-4 py-3 focus:outline-none focus:border-primary" />
             </div>
-            <div>
-              <label className="block font-['Jost'] text-xs tracking-[0.15em] uppercase text-muted-foreground mb-2">Prezzo (es. 29)</label>
-              <input type="text" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="29"
-                className="w-full bg-card border border-border text-foreground font-['Jost'] text-sm px-4 py-3 focus:outline-none focus:border-primary placeholder:text-muted-foreground/40" />
+            <div className="flex items-end gap-4">
+              {!isFree && (
+                <div className="flex-1">
+                  <label className="block font-['Jost'] text-xs tracking-[0.15em] uppercase text-muted-foreground mb-2">Prezzo (es. 29)</label>
+                  <input type="text" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="29"
+                    className="w-full bg-card border border-border text-foreground font-['Jost'] text-sm px-4 py-3 focus:outline-none focus:border-primary placeholder:text-muted-foreground/40" />
+                </div>
+              )}
+              <label className="flex items-center gap-2 cursor-pointer select-none pb-3">
+                <input type="checkbox" checked={isFree} onChange={(e) => setIsFree(e.target.checked)} className="w-4 h-4 accent-primary" />
+                <span className="font-['Jost'] text-xs tracking-[0.15em] uppercase text-muted-foreground">Gratuito</span>
+              </label>
             </div>
           </div>
 
@@ -450,18 +459,28 @@ function PdfManager() {
               className="w-full bg-card border border-border text-foreground font-['Jost'] text-sm px-4 py-3 focus:outline-none focus:border-primary resize-none" />
           </div>
 
-          <div>
-            <label className="block font-['Jost'] text-xs tracking-[0.15em] uppercase text-muted-foreground mb-2">
-              Link Stripe (URL pagamento)
-              {!editingId && price && parseFloat(price) > 0 && !stripeLink && (
-                <span className="ml-2 text-primary/70 normal-case font-normal">
-                  — verrà generato automaticamente
-                </span>
-              )}
-            </label>
-            <input type="url" value={stripeLink} onChange={(e) => setStripeLink(e.target.value)} placeholder={!editingId && price && parseFloat(price) > 0 ? "Lascia vuoto per generarlo automaticamente" : "https://buy.stripe.com/..."}
-              className="w-full bg-card border border-border text-foreground font-['Jost'] text-sm px-4 py-3 focus:outline-none focus:border-primary placeholder:text-muted-foreground/40" />
-          </div>
+          {!isFree && (
+            <div>
+              <label className="block font-['Jost'] text-xs tracking-[0.15em] uppercase text-muted-foreground mb-2">
+                Link Stripe (URL pagamento)
+                {!editingId && price && parseFloat(price) > 0 && !stripeLink && (
+                  <span className="ml-2 text-primary/70 normal-case font-normal">
+                    — verrà generato automaticamente
+                  </span>
+                )}
+              </label>
+              <input type="url" value={stripeLink} onChange={(e) => setStripeLink(e.target.value)} placeholder={!editingId && price && parseFloat(price) > 0 ? "Lascia vuoto per generarlo automaticamente" : "https://buy.stripe.com/..."}
+                className="w-full bg-card border border-border text-foreground font-['Jost'] text-sm px-4 py-3 focus:outline-none focus:border-primary placeholder:text-muted-foreground/40" />
+            </div>
+          )}
+
+          {isFree && (
+            <div className="border border-primary/30 bg-primary/5 px-4 py-3">
+              <p className="font-['Jost'] text-xs text-primary/80 leading-relaxed">
+                PDF gratuito — nessun pagamento richiesto. Il link di download diretto verrà usato in ManyChat quando attivi la keyword.
+              </p>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
