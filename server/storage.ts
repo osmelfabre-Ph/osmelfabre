@@ -10,9 +10,7 @@ function getStorageConfig(): StorageConfig {
   const apiKey = ENV.forgeApiKey;
 
   if (!baseUrl || !apiKey) {
-    throw new Error(
-      "Storage proxy credentials missing: set BUILT_IN_FORGE_API_URL and BUILT_IN_FORGE_API_KEY"
-    );
+    throw new Error("STORAGE_NOT_CONFIGURED");
   }
 
   return { baseUrl: baseUrl.replace(/\/+$/, ""), apiKey };
@@ -72,7 +70,7 @@ export async function storagePut(
   data: Buffer | Uint8Array | string,
   contentType = "application/octet-stream"
 ): Promise<{ key: string; url: string }> {
-  const { baseUrl, apiKey } = getStorageConfig();
+  const { baseUrl, apiKey } = getStorageConfig(); // throws STORAGE_NOT_CONFIGURED if not set
   const key = normalizeKey(relKey);
   const uploadUrl = buildUploadUrl(baseUrl, key);
   const formData = toFormData(data, contentType, key.split("/").pop() ?? key);
