@@ -10,12 +10,14 @@
 import SEO from "@/components/SEO";
 import { useReveal } from "@/hooks/useReveal";
 import { Link } from "wouter";
+import { trpc } from "@/lib/trpc";
 
 const HERO_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663510175502/Jt7ZRyXY4rb5NpEBkocwTA/CHRISMADSENBW-32_3daa1d99.webp";
 const ACTOR_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663510175502/Jt7ZRyXY4rb5NpEBkocwTA/ALICE-13_a7a0d3e3.webp";
 
 export default function Home() {
   const addRef = useReveal();
+  const { data: galleryPhotos } = trpc.photos.gallery.useQuery();
 
   return (
     <>
@@ -322,6 +324,36 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* ── FOTO STRIP ──────────────────────────────────────── */}
+      {galleryPhotos && galleryPhotos.length > 0 && (
+        <section className="py-0 overflow-hidden">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide" style={{ scrollSnapType: "x mandatory" }}>
+            {galleryPhotos.slice(0, 6).map((photo, i) => (
+              <div
+                key={photo.id}
+                className="shrink-0"
+                style={{ width: "clamp(240px, 30vw, 400px)", height: "clamp(300px, 40vw, 520px)", scrollSnapAlign: "start" }}
+              >
+                <img
+                  src={photo.url}
+                  alt={photo.subject ?? `Ritratto ${i + 1}`}
+                  className="w-full h-full object-cover"
+                  style={{ filter: "brightness(0.85)" }}
+                />
+              </div>
+            ))}
+            <div className="shrink-0 flex items-center justify-center px-12" style={{ minWidth: "200px" }}>
+              <Link
+                href="/galleria"
+                className="font-['Jost'] text-xs tracking-[0.2em] uppercase text-primary hover:text-foreground transition-colors duration-300 whitespace-nowrap"
+              >
+                Vedi tutta la galleria →
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── SERVIZI ─────────────────────────────────────────── */}
       <section className="py-0 relative overflow-hidden">
