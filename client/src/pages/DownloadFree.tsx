@@ -4,60 +4,109 @@ import { trpc } from "@/lib/trpc";
 
 export default function DownloadFree() {
   const pdfId = parseInt(new URLSearchParams(window.location.search).get("id") ?? "0");
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const [pdfTitle, setPdfTitle] = useState<string | null>(null);
   const [downloaded, setDownloaded] = useState(false);
-
-  const { data, isLoading, error } = trpc.pdfs.downloadFree.useQuery(
-    { pdfId },
-    { enabled: !!pdfId }
-  );
 
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
-  const handleDownload = () => {
-    if (!data?.pdfUrl) return;
-    setDownloaded(true);
-    window.open(data.pdfUrl, "_blank");
+  const requestFree = trpc.pdfs.requestFreePdf.useMutation({
+    onSuccess: (data) => {
+      setDownloadUrl(data.pdfUrl);
+      setPdfTitle(data.pdfTitle);
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+    requestFree.mutate({ pdfId, email, name: name || undefined });
   };
+
+  const handleDownload = () => {
+    if (!downloadUrl) return;
+    setDownloaded(true);
+    window.open(downloadUrl, "_blank");
+  };
+
+  if (!pdfId) return (
+    <section className="min-h-screen flex items-center justify-center py-24">
+      <p className="font-['Jost'] text-sm text-muted-foreground">PDF non trovato</p>
+    </section>
+  );
 
   return (
     <section className="min-h-screen flex items-center justify-center py-24">
       <div className="container max-w-xl text-center">
 
-        {isLoading && (
-          <p className="font-['Jost'] text-sm font-light text-muted-foreground tracking-[0.15em] uppercase">
-            Caricamento…
-          </p>
-        )}
-
-        {!isLoading && (error || !data) && (
+        {/* Email form — before download */}
+        {!downloadUrl && (
           <div>
+            <div className="v-line h-16 mx-auto mb-8" />
             <p className="font-['Jost'] text-[10px] font-medium tracking-[0.3em] uppercase text-primary mb-4">
-              Attenzione
+              Download Gratuito
             </p>
-            <h1 className="font-['Cormorant_Garamond'] font-light text-foreground mb-6" style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)" }}>
-              PDF non trovato
+            <h1 className="font-['Cormorant_Garamond'] font-light text-foreground mb-4" style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)" }}>
+              Inserisci la tua email
             </h1>
-            <Link href="/" className="inline-flex items-center gap-4 border border-primary text-primary px-8 py-4 font-['Jost'] text-xs font-medium tracking-[0.2em] uppercase hover:text-primary-foreground transition-colors duration-350">
-              Torna alla Home
-            </Link>
+            <p className="font-['Jost'] font-light text-sm text-muted-foreground leading-loose mb-10">
+              Lascia la tua email per ricevere il PDF gratuitamente e restare aggiornato sui nuovi contenuti.
+            </p>
+
+            <form onSubmit={handleSubmit} className="space-y-4 text-left">
+              <div>
+                <label className="block font-['Jost'] text-xs tracking-[0.15em] uppercase text-muted-foreground mb-2">Nome</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Il tuo nome"
+                  className="w-full bg-card border border-border text-foreground font-['Jost'] text-sm px-4 py-3 focus:outline-none focus:border-primary placeholder:text-muted-foreground/40"
+                />
+              </div>
+              <div>
+                <label className="block font-['Jost'] text-xs tracking-[0.15em] uppercase text-muted-foreground mb-2">Email *</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="tua@email.it"
+                  required
+                  className="w-full bg-card border border-border text-foreground font-['Jost'] text-sm px-4 py-3 focus:outline-none focus:border-primary placeholder:text-muted-foreground/40"
+                />
+              </div>
+              {requestFree.error && (
+                <p className="font-['Jost'] text-xs text-red-400">{requestFree.error.message}</p>
+              )}
+              <button
+                type="submit"
+                disabled={requestFree.isPending || !email}
+                className="w-full py-4 font-['Jost'] text-xs tracking-[0.25em] uppercase border border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {requestFree.isPending ? "Caricamento..." : "Scarica il PDF"}
+              </button>
+            </form>
           </div>
         )}
 
-        {!isLoading && data && (
+        {/* Download button — after email submitted */}
+        {downloadUrl && (
           <div>
             <div className="flex items-center justify-center mb-8">
               <div className="w-16 h-16 flex items-center justify-center" style={{ border: "1px solid oklch(0.58 0.1 42)" }}>
                 <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                  <path d="M14 4v14M7 11l7 7 7-7M4 22h20" stroke="oklch(0.58 0.1 42)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M5 14l7 7L23 7" stroke="oklch(0.58 0.1 42)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
             </div>
 
             <p className="font-['Jost'] text-[10px] font-medium tracking-[0.3em] uppercase text-primary mb-4">
-              Download Gratuito
+              Tutto pronto
             </p>
             <h1 className="font-['Cormorant_Garamond'] font-light text-foreground mb-6" style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)" }}>
-              {data.pdfTitle}
+              {pdfTitle}
             </h1>
 
             <div className="h-sep mb-8 max-w-xs mx-auto" />
@@ -78,7 +127,7 @@ export default function DownloadFree() {
               </p>
             )}
 
-            <Link href="/risorse" className="inline-flex items-center gap-4 border border-border text-muted-foreground px-8 py-4 font-['Jost'] text-xs font-medium tracking-[0.2em] uppercase hover:border-foreground hover:text-foreground transition-colors duration-350 mt-4">
+            <Link href="/risorse" className="inline-flex items-center gap-4 border border-border text-muted-foreground px-8 py-4 font-['Jost'] text-xs font-medium tracking-[0.2em] uppercase hover:border-foreground hover:text-foreground transition-colors duration-350 mt-6">
               <span>Vedi tutti i PDF</span>
             </Link>
           </div>

@@ -191,6 +191,39 @@ export const appRouter = router({
       return getLatestPdf();
     }),
 
+    // Public: request free PDF download — collects email, subscribes to newsletter, returns URL
+    requestFreePdf: publicProcedure
+      .input(z.object({ pdfId: z.number(), email: z.string().email(), name: z.string().optional() }))
+      .mutation(async ({ input }) => {
+        const pdf = await getPdfById(input.pdfId);
+        if (!pdf || !pdf.isFree) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "PDF gratuito non trovato" });
+        }
+        // Subscribe to MailerLite newsletter
+        const apiKey = process.env.MAILERLITE_API_KEY;
+        const groupId = process.env.MAILERLITE_NEWSLETTER_GROUP_ID;
+        if (apiKey && groupId) {
+          try {
+            const [firstName, ...rest] = (input.name ?? "").split(" ");
+            await fetch("https://connect.mailerlite.com/api/subscribers", {
+              method: "POST",
+              headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json", "Accept": "application/json" },
+              body: JSON.stringify({ email: input.email, fields: { name: firstName || undefined, last_name: rest.join(" ") || undefined }, groups: [groupId], status: "active" }),
+            });
+          } catch (err: any) {
+            console.error("[MailerLite] Errore iscrizione PDF gratuito:", err.message);
+          }
+        }
+        let downloadUrl: string;
+        try {
+          const result = await storageGet(pdf.pdfKey);
+          downloadUrl = result.url;
+        } catch {
+          downloadUrl = pdf.pdfUrl;
+        }
+        return { pdfTitle: pdf.title, pdfUrl: downloadUrl };
+      }),
+
     // Public: get download URL for a free PDF (no payment required)
     downloadFree: publicProcedure
       .input(z.object({ pdfId: z.number() }))
