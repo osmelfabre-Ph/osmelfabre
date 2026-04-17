@@ -36,6 +36,13 @@
       "when": 1775842933664,
       "tag": "0004_amused_sandman",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1776300000000,
+      "tag": "0005_seed_data",
+      "breakpoints": true
     }
   ]
 }
