@@ -99,7 +99,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           {days !== null && (
             <Link
               href="/workshop-di-ritratto-maschile.html"
-              className="hidden md:flex items-center gap-2 px-3 py-1.5 border border-primary/40 hover:border-primary transition-colors duration-300 group"
+              className="hidden lg:flex items-center gap-2 px-3 py-1.5 border border-primary/40 hover:border-primary transition-colors duration-300 group"
             >
               <span
                 className="w-1.5 h-1.5 rounded-full animate-pulse"
@@ -112,7 +112,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           )}
 
           {/* Desktop nav */}
-          <div className="hidden md:flex items-center gap-10">
+          <div className="hidden lg:flex items-center gap-10">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
@@ -140,7 +140,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
           {/* Mobile hamburger */}
           <button
-            className="md:hidden flex flex-col gap-1.5 p-2"
+            className="lg:hidden flex flex-col gap-1.5 p-2"
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="Menu"
           >
@@ -158,7 +158,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Mobile menu */}
         <div
-          className={`md:hidden overflow-hidden transition-all duration-500 ${
+          className={`lg:hidden overflow-hidden transition-all duration-500 ${
             menuOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
           }`}
           style={{ background: "oklch(0.135 0.004 80 / 0.98)" }}
