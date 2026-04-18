@@ -193,8 +193,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* ── FOOTER ──────────────────────────────────────────── */}
       <footer className="py-16 md:py-20 border-t border-border">
         <div className="container">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
-            <div>
+          {/* Top row: logo + nav links (lg only) */}
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8 mb-10">
+            <div className="shrink-0">
               <Link href="/" className="font-['Cormorant_Garamond'] text-2xl font-light tracking-[0.1em] text-foreground mb-2 hover:text-primary transition-colors duration-300 block">
                 Osmel Fabre
               </Link>
@@ -203,7 +204,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </p>
             </div>
 
-            <div className="hidden md:flex items-center gap-8">
+            <div className="hidden lg:flex flex-wrap items-center gap-6">
               {NAV_LINKS.map((link) => (
                 <Link
                   key={link.href}
@@ -214,36 +215,35 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </Link>
               ))}
             </div>
+          </div>
 
-            <div className="flex flex-col md:items-end gap-2">
-              <a
-                href="https://www.themenbrandphotography.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-['Jost'] text-xs font-light text-muted-foreground hover:text-primary transition-colors duration-300 tracking-wide"
-              >
-                The Men's Brand Photography ↗
-              </a>
-              <a
-                href="https://www.instagram.com/osmelfabre"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-['Jost'] text-xs font-light text-muted-foreground hover:text-primary transition-colors duration-300 tracking-wide"
-              >
-                @osmelfabre
-              </a>
-              <p className="font-['Jost'] text-xs font-light text-muted-foreground/50">
-                © {new Date().getFullYear()} Osmel Fabre. Tutti i diritti riservati.
-              </p>
-              {!user && (
-                <a
-                  href="/admin-login"
-                  className="font-['Jost'] text-xs font-medium tracking-[0.2em] uppercase transition-colors duration-300 border border-primary/40 px-3 py-1.5 text-primary/60 hover:text-primary hover:border-primary"
-                >
-                  Accedi
-                </a>
-              )}
-            </div>
+          {/* Bottom row: links + copyright + admin */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-6 border-t border-border/40">
+            <a
+              href="https://www.themenbrandphotography.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-['Jost'] text-xs font-light text-muted-foreground hover:text-primary transition-colors duration-300 tracking-wide"
+            >
+              The Men's Brand Photography ↗
+            </a>
+            <a
+              href="https://www.instagram.com/osmelfabre"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-['Jost'] text-xs font-light text-muted-foreground hover:text-primary transition-colors duration-300 tracking-wide"
+            >
+              @osmelfabre
+            </a>
+            <p className="font-['Jost'] text-xs font-light text-muted-foreground/50">
+              © {new Date().getFullYear()} Osmel Fabre. Tutti i diritti riservati.
+            </p>
+            <a
+              href={user?.role === "admin" ? "/admin" : "/admin-login"}
+              className="font-['Jost'] text-xs font-medium tracking-[0.2em] uppercase transition-colors duration-300 border border-primary/40 px-3 py-1.5 text-primary/60 hover:text-primary hover:border-primary"
+            >
+              {user?.role === "admin" ? "Admin" : "Accedi"}
+            </a>
           </div>
         </div>
       </footer>
