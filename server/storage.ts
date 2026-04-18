@@ -41,7 +41,8 @@ export async function storagePut(
     ContentType: contentType,
   }));
 
-  const url = await getSignedUrl(client, new GetObjectCommand({ Bucket: bucket, Key: key }), { expiresIn: 3600 * 24 * 7 });
+  const appUrl = process.env.APP_URL?.replace(/\/$/, "") ?? "https://www.osmelfabre.it";
+  const url = `${appUrl}/media/${key}`;
   return { key, url };
 }
 

@@ -9,7 +9,7 @@ import { Link } from "wouter";
 
 const DONNA_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663510175502/Jt7ZRyXY4rb5NpEBkocwTA/CARLOTTAPARODI-1_cdaf8a60.webp";
 const UOMO_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663510175502/Jt7ZRyXY4rb5NpEBkocwTA/LUCAPANTINI-2026-53_afa9fac3.webp";
-const MBP_IMG = ""; // TODO: incolla qui l'URL dopo aver caricato la foto dall'admin
+const MBP_IMG = "https://www.osmelfabre.it/media/osmel-photos/gallery/1776493937139-cs8neflzlcm.jpg";
 
 const DONNA_INCLUDES = [
   "Trucco e parrucco professionale",

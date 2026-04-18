@@ -8,6 +8,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { registerStripeWebhook } from "../stripeWebhook";
+import { storageGet } from "../storage";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -81,6 +82,16 @@ ${pages.map(p => `  <url>
   app.get("/robots.txt", (_req, res) => {
     res.type("text/plain");
     res.send(`User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\nSitemap: https://www.osmelfabre.it/sitemap.xml`);
+  });
+
+  // Media proxy — genera un signed URL fresco e fa redirect (evita URL scaduti)
+  app.get("/media/:key(*)", async (req, res) => {
+    try {
+      const { url } = await storageGet(req.params.key);
+      res.redirect(302, url);
+    } catch {
+      res.status(404).send("Not found");
+    }
   });
 
   // OAuth callback under /api/oauth/callback
