@@ -177,6 +177,66 @@ export default function Servizi() {
         </div>
       </section>
 
+      {/* ── THE MEN'S BRAND PHOTOGRAPHY ────────────────────── */}
+      <section className="py-0">
+        <div className="container">
+          <div
+            ref={addRef}
+            className="reveal relative overflow-hidden"
+            style={{
+              background: "linear-gradient(135deg, oklch(0.18 0.006 80) 0%, oklch(0.14 0.004 80) 100%)",
+              borderLeft: "2px solid oklch(0.58 0.1 42)",
+            }}
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 items-center">
+              {/* Content */}
+              <div className="p-10 md:p-14 lg:p-16 flex flex-col justify-center">
+                <span className="font-['Jost'] text-[10px] font-medium tracking-[0.3em] uppercase text-primary mb-5">
+                  Specializzazione — Fotografia Corporate Maschile
+                </span>
+                <h2
+                  className="font-['Cormorant_Garamond'] font-light leading-[1.1] text-foreground mb-4"
+                  style={{ fontSize: "clamp(1.8rem, 3vw, 2.8rem)" }}
+                >
+                  The Men's Brand<br />Photography
+                </h2>
+                <p className="font-['Cormorant_Garamond'] italic text-lg text-primary mb-6">
+                  L'immagine professionale per l'uomo che costruisce il proprio brand
+                </p>
+                <p className="font-['Jost'] font-light text-sm text-muted-foreground leading-loose mb-10 max-w-sm">
+                  Un progetto dedicato esclusivamente alla fotografia di ritratto per professionisti, imprenditori e brand maschili. Immagine, identità e comunicazione visiva al servizio della tua presenza nel mercato.
+                </p>
+                <a
+                  href="https://www.themenbrandphotography.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="cta-btn inline-flex items-center gap-4 border border-primary text-primary px-8 py-4 font-['Jost'] text-xs font-medium tracking-[0.2em] uppercase hover:text-primary-foreground transition-colors duration-350 self-start"
+                >
+                  <span>Scopri il progetto</span>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
+                    <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </a>
+              </div>
+              {/* Decorative right panel */}
+              <div className="hidden lg:flex flex-col items-center justify-center p-16 gap-6 border-l border-border/40">
+                <span
+                  className="font-['Cormorant_Garamond'] font-light text-center leading-none text-foreground/10 select-none"
+                  style={{ fontSize: "clamp(6rem, 10vw, 10rem)" }}
+                >
+                  MBP
+                </span>
+                <span className="font-['Jost'] text-[10px] font-medium tracking-[0.4em] uppercase text-muted-foreground/50">
+                  themenbrandphotography.com
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="h-px bg-border" />
+
       {/* ── BOOK DONNA ──────────────────────────────────────── */}
       <ServiceCard
         img={DONNA_IMG}

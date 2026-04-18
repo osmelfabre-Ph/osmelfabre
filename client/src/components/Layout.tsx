@@ -217,6 +217,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
             <div className="flex flex-col md:items-end gap-2">
               <a
+                href="https://www.themenbrandphotography.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-['Jost'] text-xs font-light text-muted-foreground hover:text-primary transition-colors duration-300 tracking-wide"
+              >
+                The Men's Brand Photography ↗
+              </a>
+              <a
                 href="https://www.instagram.com/osmelfabre"
                 target="_blank"
                 rel="noopener noreferrer"
