@@ -8,7 +8,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import { toast } from "sonner";
 
 const HERO_PAGES = [
@@ -30,153 +30,203 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
+interface PendingPhoto {
+  id: string;
+  file: File;
+  dataUrl: string;
+  subject: string;
+  category: "Uomo" | "Donna";
+  status: "pending" | "uploading" | "done" | "error";
+}
+
 // ── Upload Form ────────────────────────────────────────────────────────────────
 function UploadForm({ onSuccess }: { onSuccess: () => void }) {
   const [type, setType] = useState<"gallery" | "hero">("gallery");
   const [page, setPage] = useState("home");
-  const [subject, setSubject] = useState("");
-  const [category, setCategory] = useState<"Uomo" | "Donna">("Uomo");
-  const [preview, setPreview] = useState<string | null>(null);
-  const [file, setFile] = useState<File | null>(null);
+  const [pending, setPending] = useState<PendingPhoto[]>([]);
+  const [dragging, setDragging] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const upload = trpc.photos.upload.useMutation({
-    onSuccess: () => {
-      toast.success("Foto caricata con successo");
-      setPreview(null);
-      setFile(null);
-      setSubject("");
-      if (fileRef.current) fileRef.current.value = "";
-      onSuccess();
-    },
-    onError: (e) => toast.error(`Errore: ${e.message}`),
-  });
+  const upload = trpc.photos.upload.useMutation();
 
-  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    setFile(f);
-    const url = await fileToDataUrl(f);
-    setPreview(url);
-  };
+  const addFiles = useCallback(async (files: FileList | File[]) => {
+    const arr = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    const newItems: PendingPhoto[] = await Promise.all(
+      arr.map(async (f) => ({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        file: f,
+        dataUrl: await fileToDataUrl(f),
+        subject: "",
+        category: "Uomo" as const,
+        status: "pending" as const,
+      }))
+    );
+    setPending((prev) => [...prev, ...newItems]);
+  }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    if (!file || !preview) { toast.error("Seleziona un'immagine"); return; }
-    upload.mutate({
-      dataUrl: preview,
-      filename: file.name,
-      type,
-      page: type === "hero" ? page : undefined,
-      subject: subject || undefined,
-      category,
-    });
+    setDragging(false);
+    if (e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
+  }, [addFiles]);
+
+  const updateItem = (id: string, patch: Partial<PendingPhoto>) =>
+    setPending((prev) => prev.map((p) => p.id === id ? { ...p, ...patch } : p));
+
+  const removeItem = (id: string) =>
+    setPending((prev) => prev.filter((p) => p.id !== id));
+
+  const handleUploadAll = async () => {
+    const toUpload = pending.filter((p) => p.status === "pending");
+    if (!toUpload.length) return;
+    setUploading(true);
+
+    for (const item of toUpload) {
+      updateItem(item.id, { status: "uploading" });
+      try {
+        await upload.mutateAsync({
+          dataUrl: item.dataUrl,
+          filename: item.file.name,
+          type,
+          page: type === "hero" ? page : undefined,
+          subject: item.subject || undefined,
+          category: item.category,
+        });
+        updateItem(item.id, { status: "done" });
+      } catch {
+        updateItem(item.id, { status: "error" });
+      }
+    }
+
+    setUploading(false);
+    const allDone = pending.every((p) => p.status === "done" || (toUpload.find((t) => t.id === p.id)?.status === "done"));
+    if (allDone) {
+      setTimeout(() => { setPending([]); onSuccess(); }, 800);
+    } else {
+      onSuccess();
+    }
   };
+
+  const pendingCount = pending.filter((p) => p.status === "pending").length;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      {/* Type selector */}
-      <div className="flex gap-4">
-        {(["gallery", "hero"] as const).map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => setType(t)}
-            className={`px-5 py-2 font-['Jost'] text-xs tracking-[0.2em] uppercase border transition-colors duration-200 ${
-              type === t
-                ? "border-primary text-primary bg-primary/10"
-                : "border-border text-muted-foreground hover:border-foreground"
-            }`}
-          >
-            {t === "gallery" ? "Galleria" : "Hero"}
-          </button>
-        ))}
-      </div>
-
-      {/* Hero page selector */}
-      {type === "hero" && (
-        <div>
-          <label className="block font-['Jost'] text-xs tracking-[0.15em] uppercase text-muted-foreground mb-2">
-            Pagina
-          </label>
-          <select
-            value={page}
-            onChange={(e) => setPage(e.target.value)}
-            className="w-full bg-card border border-border text-foreground font-['Jost'] text-sm px-4 py-3 focus:outline-none focus:border-primary"
-          >
-            {HERO_PAGES.map((p) => (
-              <option key={p.value} value={p.value}>{p.label}</option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      {/* Subject */}
-      <div>
-        <label className="block font-['Jost'] text-xs tracking-[0.15em] uppercase text-muted-foreground mb-2">
-          Nome soggetto {type === "gallery" && "(opzionale)"}
-        </label>
-        <input
-          type="text"
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-          placeholder="Es. Luca Pantini"
-          className="w-full bg-card border border-border text-foreground font-['Jost'] text-sm px-4 py-3 focus:outline-none focus:border-primary placeholder:text-muted-foreground/40"
-        />
-      </div>
-
-      {/* Category */}
-      <div>
-        <label className="block font-['Jost'] text-xs tracking-[0.15em] uppercase text-muted-foreground mb-2">
-          Categoria
-        </label>
-        <div className="flex gap-4">
-          {(["Uomo", "Donna"] as const).map((c) => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => setCategory(c)}
+    <div className="space-y-6">
+      {/* Type + Hero page selector */}
+      <div className="flex flex-wrap gap-4 items-center">
+        <div className="flex gap-3">
+          {(["gallery", "hero"] as const).map((t) => (
+            <button key={t} type="button" onClick={() => setType(t)}
               className={`px-5 py-2 font-['Jost'] text-xs tracking-[0.2em] uppercase border transition-colors duration-200 ${
-                category === c
-                  ? "border-primary text-primary bg-primary/10"
-                  : "border-border text-muted-foreground hover:border-foreground"
+                type === t ? "border-primary text-primary bg-primary/10" : "border-border text-muted-foreground hover:border-foreground"
               }`}
             >
-              {c}
+              {t === "gallery" ? "Galleria" : "Hero"}
             </button>
           ))}
         </div>
+        {type === "hero" && (
+          <select value={page} onChange={(e) => setPage(e.target.value)}
+            className="bg-card border border-border text-foreground font-['Jost'] text-sm px-4 py-2 focus:outline-none focus:border-primary"
+          >
+            {HERO_PAGES.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+          </select>
+        )}
       </div>
 
-      {/* File input */}
-      <div>
-        <label className="block font-['Jost'] text-xs tracking-[0.15em] uppercase text-muted-foreground mb-2">
-          Immagine
-        </label>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*"
-          onChange={handleFile}
-          className="w-full font-['Jost'] text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:border file:border-border file:bg-card file:text-foreground file:text-xs file:tracking-[0.15em] file:uppercase file:cursor-pointer hover:file:border-primary"
-        />
-      </div>
-
-      {/* Preview */}
-      {preview && (
-        <div className="relative">
-          <img src={preview} alt="Preview" className="w-full max-h-64 object-cover object-center" />
-        </div>
-      )}
-
-      <button
-        type="submit"
-        disabled={upload.isPending || !file}
-        className="w-full py-4 font-['Jost'] text-xs tracking-[0.25em] uppercase border border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
+      {/* Drop zone */}
+      <div
+        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={onDrop}
+        onClick={() => fileRef.current?.click()}
+        className={`border-2 border-dashed rounded-sm cursor-pointer transition-colors duration-200 flex flex-col items-center justify-center gap-3 py-12 ${
+          dragging ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+        }`}
       >
-        {upload.isPending ? "Caricamento..." : "Carica foto"}
-      </button>
-    </form>
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-muted-foreground">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+        <p className="font-['Jost'] text-sm text-muted-foreground">
+          Trascina le foto qui o <span className="text-primary underline">sfoglia</span>
+        </p>
+        <p className="font-['Jost'] text-xs text-muted-foreground/50">Puoi selezionare più file contemporaneamente</p>
+        <input ref={fileRef} type="file" accept="image/*" multiple className="hidden"
+          onChange={(e) => e.target.files && addFiles(e.target.files)} />
+      </div>
+
+      {/* Pending grid */}
+      {pending.length > 0 && (
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {pending.map((item) => (
+              <div key={item.id} className="relative bg-card border border-border overflow-hidden">
+                {/* Thumbnail */}
+                <div className="relative aspect-[3/4] overflow-hidden">
+                  <img src={item.dataUrl} alt="" className="w-full h-full object-cover" />
+                  {/* Status overlay */}
+                  {item.status === "uploading" && (
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                      <span className="font-['Jost'] text-white text-xs tracking-[0.2em] uppercase animate-pulse">Caricamento...</span>
+                    </div>
+                  )}
+                  {item.status === "done" && (
+                    <div className="absolute inset-0 bg-green-900/70 flex items-center justify-center">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </div>
+                  )}
+                  {item.status === "error" && (
+                    <div className="absolute inset-0 bg-red-900/70 flex items-center justify-center">
+                      <span className="font-['Jost'] text-white text-xs">Errore</span>
+                    </div>
+                  )}
+                  {/* Remove button */}
+                  {item.status === "pending" && (
+                    <button onClick={() => removeItem(item.id)}
+                      className="absolute top-2 right-2 w-6 h-6 bg-black/70 text-white flex items-center justify-center hover:bg-red-600 transition-colors text-xs"
+                    >✕</button>
+                  )}
+                </div>
+                {/* Metadata */}
+                {item.status === "pending" && (
+                  <div className="p-3 space-y-2">
+                    <input
+                      type="text"
+                      value={item.subject}
+                      onChange={(e) => updateItem(item.id, { subject: e.target.value })}
+                      placeholder="Nome soggetto"
+                      className="w-full bg-background border border-border text-foreground font-['Jost'] text-xs px-3 py-2 focus:outline-none focus:border-primary placeholder:text-muted-foreground/40"
+                    />
+                    <div className="flex gap-2">
+                      {(["Uomo", "Donna"] as const).map((c) => (
+                        <button key={c} type="button" onClick={() => updateItem(item.id, { category: c })}
+                          className={`flex-1 py-1.5 font-['Jost'] text-[10px] tracking-[0.15em] uppercase border transition-colors ${
+                            item.category === c ? "border-primary text-primary bg-primary/10" : "border-border text-muted-foreground"
+                          }`}
+                        >{c}</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="flex items-center justify-between gap-4">
+            <button onClick={() => setPending([])} disabled={uploading}
+              className="font-['Jost'] text-xs tracking-[0.2em] uppercase text-muted-foreground hover:text-foreground border-b border-transparent hover:border-foreground transition-colors disabled:opacity-40"
+            >
+              Svuota tutto
+            </button>
+            <button onClick={handleUploadAll} disabled={uploading || pendingCount === 0}
+              className="px-8 py-4 font-['Jost'] text-xs tracking-[0.25em] uppercase border border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {uploading ? "Caricamento..." : `Carica ${pendingCount} foto`}
+            </button>
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
