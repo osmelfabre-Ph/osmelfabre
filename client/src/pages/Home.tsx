@@ -22,8 +22,8 @@ export default function Home() {
   return (
     <>
       <SEO
-        title="Fotografia di Ritratto a Roma"
-        description="Osmel Fabre — Fotografo di ritratto a Roma. Ritratti professionali, book per attori, formazione e mentoring. Identità e presenza attraverso il ritratto."
+        title="Fotografo di Ritratto a Roma"
+        description="Osmel Fabre — Fotografo di ritratto a Roma. Ritratti professionali, book per attori, fotografia corporate maschile. Identità visiva e presenza attraverso il ritratto."
         url="/"
       />
       {/* ── HERO ────────────────────────────────────────────── */}
