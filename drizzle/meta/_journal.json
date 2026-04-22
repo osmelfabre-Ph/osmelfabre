@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1775744283034,
+      "tag": "0000_glossy_sandman",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1775744369137,
+      "tag": "0001_graceful_william_stryker",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1775745736344,
+      "tag": "0002_ordinary_mariko_yashida",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1775837053319,
+      "tag": "0003_big_guardian",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1775842933664,
+      "tag": "0004_amused_sandman",
+      "breakpoints": true
+    }
+  ]
+}

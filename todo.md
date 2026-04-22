@@ -1,0 +1,37 @@
+- [x] Aggiungere link login discreto nel footer per accesso owner
+- [x] Rendere link "Accedi" nel footer visibile come pulsante Admin nella navbar
+- [x] Aggiungere CTA "Prenota una sessione" nella hero della Home sotto il sottotitolo
+- [x] Integrare Google Analytics (GA4) nel sito (ID: G-C5TPBFTGQV)
+- [x] Integrare Meta Pixel nel sito (ID: 1170058884491357)
+- [x] Sostituire foto hero pagina Contatti con ritratto di Osmel (contact-page.webp)
+- [x] Correggere posizionamento foto hero Contatti: viso visibile per intero (object-position + scale)
+- [x] Sostituire foto hero Contatti con ritratto verticale Osmel+Hasselblad (OSMEL-2025-4-2.jpg)
+- [x] Sostituire foto hero pagina Formazione con foto macchine fotografiche vintage su legno
+- [x] Spostare route workshop da /formazione/workshop-ritratto-maschile a /workshop-ritratto-maschile
+- [x] Cambiare route workshop da /workshop-ritratto-maschile a /workshop-di-ritratto-maschile.html
+- [x] Sostituire firma navbar con nuova versione PNG (FIRMA-OSMEL-white.png), dimensioni h-16
+- [x] Ritagliare PNG firma (autocrop), caricarla sul CDN e sostituire SVG inline nella navbar
+- [x] Aggiornare schema DB: tabella pdf_products con campi S3, Stripe e metadati
+- [x] Backend: procedura tRPC per upload PDF su S3 + creazione automatica prodotto/link Stripe
+- [x] Backend: webhook Stripe per verificare pagamento completato
+- [x] Backend: procedura tRPC per generare pre-signed URL download (scade 24h)
+- [x] Admin: pagina gestione PDF con upload, link Stripe copiabile e lista prodotti
+- [x] Frontend: pagina /download-success con verifica pagamento e link download sicuro
+- [x] Aggiornare STRIPE_WEBHOOK_SECRET con il valore corretto (da impostare in Settings → Payment)
+- [x] Implementare fallback diretto API Stripe in verifyPurchase (se webhook in ritardo)
+- [x] Fix bug: PDF singolo impostato come "ultimo" non viene visualizzato nella pagina Risorse
+- [x] Fix bug: PDF caricati non vengono visualizzati nella pagina Risorse (0 PDF mostrati con 2 caricati)
+- [x] Aggiungere sistema anteprima PDF: campo previewUrl in DB, upload PDF anteprima in Admin, modale di preview nella pagina Risorse
+- [x] Anteprima PDF automatica: estrarre le prime 3 pagine dal PDF completo lato server (senza upload manuale separato)
+- [x] Aggiungere sezione recensioni nella Home con le migliori recensioni del workshop (6 recensioni reali da Google)
+- [x] Integrazione ManyChat: Bot Field per link PDF dinamico, keyword trigger, sendFlow via API
+- [x] Integrazione MailerLite: iscrizione automatica newsletter dopo pagamento Stripe completato
+- [x] Admin UI: pannello ManyChat con campo keyword e pulsante "Attiva automazione"
+- [x] Sitemap XML dinamica: endpoint /sitemap.xml nel backend con tutte le pagine del sito
+- [x] Pagina 404 personalizzata nel design del sito (stile Osmel Fabre)
+- [x] Sistema login Admin indipendente da Manus OAuth: email + password proprie, endpoint /api/admin/login, cookie di sessione sicuro
+- [x] Pagina login Admin nel frontend con form email/password e protezione route /admin
+- [x] Pacchetto ZIP del sito completo
+- [x] Aggiornare prodotto Stripe con immagine copertina e descrizione del PDF nel link di pagamento
+- [x] Collegare Bot Field ManyChat pdf_acquisto_link al flow creato dall'utente (aggiornamento automatico link)
+- [x] Meta tag SEO: componente riutilizzabile con title, description e Open Graph per ogni pagina del sito

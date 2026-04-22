@@ -1,0 +1,237 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================================
+   OSMEL FABRE — DESIGN SYSTEM: Minimalismo Sensoriale
+   ============================================================
+   Movement: Editorial Photography / Sensory Minimalism
+   Background: Deep charcoal warm (#1A1A18) — not cold black
+   Text primary: Ivory white (#F5F0E8) — never cold white
+   Accent: Burnt terracotta (#C4704A) — human warmth
+   Separator: Medium grey (#3A3A36)
+   Typography: Cormorant Garamond (display) + Jost (body)
+   ============================================================ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+  --radius: 0;
+  /* Deep charcoal warm background */
+  --background: oklch(0.135 0.004 80);
+  /* Ivory white foreground */
+  --foreground: oklch(0.95 0.008 80);
+  --card: oklch(0.16 0.004 80);
+  --card-foreground: oklch(0.95 0.008 80);
+  --popover: oklch(0.16 0.004 80);
+  --popover-foreground: oklch(0.95 0.008 80);
+  /* Burnt terracotta primary accent */
+  --primary: oklch(0.58 0.1 42);
+  --primary-foreground: oklch(0.98 0.005 80);
+  --secondary: oklch(0.22 0.004 80);
+  --secondary-foreground: oklch(0.85 0.008 80);
+  --muted: oklch(0.22 0.004 80);
+  --muted-foreground: oklch(0.78 0.008 80);
+  --accent: oklch(0.22 0.004 80);
+  --accent-foreground: oklch(0.95 0.008 80);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  /* Subtle warm borders */
+  --border: oklch(0.28 0.004 80);
+  --input: oklch(0.28 0.004 80);
+  --ring: oklch(0.58 0.1 42);
+  --chart-1: oklch(0.58 0.1 42);
+  --chart-2: oklch(0.5 0.08 42);
+  --chart-3: oklch(0.42 0.06 42);
+  --chart-4: oklch(0.34 0.04 42);
+  --chart-5: oklch(0.26 0.02 42);
+  --sidebar: oklch(0.16 0.004 80);
+  --sidebar-foreground: oklch(0.95 0.008 80);
+  --sidebar-primary: oklch(0.58 0.1 42);
+  --sidebar-primary-foreground: oklch(0.98 0.005 80);
+  --sidebar-accent: oklch(0.22 0.004 80);
+  --sidebar-accent-foreground: oklch(0.95 0.008 80);
+  --sidebar-border: oklch(0.28 0.004 80);
+  --sidebar-ring: oklch(0.58 0.1 42);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Jost', sans-serif;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Cormorant Garamond', serif;
+  }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [type="button"]:not(:disabled),
+  [type="submit"]:not(:disabled),
+  [type="reset"]:not(:disabled),
+  a[href],
+  select:not(:disabled),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled) {
+    @apply cursor-pointer;
+  }
+}
+
+@layer components {
+  .container {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  .flex {
+    min-height: 0;
+    min-width: 0;
+  }
+
+  @media (min-width: 640px) {
+    .container {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .container {
+      padding-left: 4rem;
+      padding-right: 4rem;
+      max-width: 1400px;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .container {
+      padding-left: 6rem;
+      padding-right: 6rem;
+    }
+  }
+}
+
+/* Fade-in animation for sections */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.7s ease forwards;
+}
+
+/* Stagger delays */
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-400 { animation-delay: 0.4s; }
+.delay-500 { animation-delay: 0.5s; }
+
+/* Reveal on scroll — initial hidden state */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Terracotta CTA hover fill animation */
+.cta-btn {
+  position: relative;
+  overflow: hidden;
+  transition: color 0.35s ease;
+}
+
+.cta-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: oklch(0.58 0.1 42);
+  transform: translateX(-101%);
+  transition: transform 0.35s ease;
+  z-index: 0;
+}
+
+.cta-btn:hover::before {
+  transform: translateX(0);
+}
+
+.cta-btn span {
+  position: relative;
+  z-index: 1;
+}
+
+/* Vertical line accent */
+.v-line {
+  width: 1px;
+  background: oklch(0.58 0.1 42);
+}
+
+/* Thin horizontal separator */
+.h-sep {
+  height: 1px;
+  background: oklch(0.28 0.004 80);
+}
+
+/* Hero scroll arrow bounce animation */
+@keyframes heroArrowBounce {
+  0%, 100% { transform: translateY(0); opacity: 0.5; }
+  50% { transform: translateY(6px); opacity: 1; }
+}
