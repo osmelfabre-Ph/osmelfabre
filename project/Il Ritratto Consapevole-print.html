@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<title>Il Ritratto Consapevole — Seminario</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: #0C0B0A; color: #F2ECE0; font-family: 'Inter', sans-serif; overflow: hidden; }
+  * { box-sizing: border-box; }
+</style>
+<script src="deck-stage.js"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<deck-stage width="1920" height="1080">
+  <section data-label="01 Copertina"><div id="s1"></div></section>
+  <section data-label="02 Epigrafe"><div id="s2"></div></section>
+  <section data-label="03 Perche"><div id="s3"></div></section>
+  <section data-label="04 Il metodo"><div id="s4"></div></section>
+  <section data-label="05 Struttura"><div id="s5"></div></section>
+  <section data-label="06 Parte I"><div id="s6"></div></section>
+  <section data-label="07 Il fotografo consapevole"><div id="s7"></div></section>
+  <section data-label="08 Tecnica presenza"><div id="s8"></div></section>
+  <section data-label="09 Tre respiri"><div id="s9"></div></section>
+  <section data-label="10 Relazione immagine"><div id="s10"></div></section>
+  <section data-label="11 Caso Paolo"><div id="s11"></div></section>
+  <section data-label="12 Parte II"><div id="s12"></div></section>
+  <section data-label="13 Quattro distanze"><div id="s13"></div></section>
+  <section data-label="14 Distanza giusta"><div id="s14"></div></section>
+  <section data-label="15 Voce silenzio"><div id="s15"></div></section>
+  <section data-label="16 Parte III"><div id="s16"></div></section>
+  <section data-label="17 Parola che svela"><div id="s17"></div></section>
+  <section data-label="18 Rapport"><div id="s18"></div></section>
+  <section data-label="19 Ancore"><div id="s19"></div></section>
+  <section data-label="20 Psicologia luce"><div id="s20"></div></section>
+  <section data-label="21 Parte IV"><div id="s21"></div></section>
+  <section data-label="22 Meditazione"><div id="s22"></div></section>
+  <section data-label="23 Occhio che sente"><div id="s23"></div></section>
+  <section data-label="24 Per chi"><div id="s24"></div></section>
+  <section data-label="25 Grazie"><div id="s25"></div></section>
+</deck-stage>
+
+<script type="text/babel" src="components.jsx"></script>
+<script type="text/babel" src="slides-intro.jsx"></script>
+<script type="text/babel" src="slides-parts-1-2.jsx"></script>
+<script type="text/babel" src="slides-parts-3-4.jsx"></script>
+<script>
+  // ---------- Tweaks: live, tweakable controls ----------
+  const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+    "accent": "#C79A3E",
+    "bg": "#F2ECE0",
+    "bgAlt": "#1A1714",
+    "coverScale": 82,
+    "titleFont": "Cormorant Garamond"
+  }/*EDITMODE-END*/;
+
+  const TWEAKS = { ...TWEAK_DEFAULTS };
+
+  function applyTweaks() {
+    const r = document.documentElement.style;
+    r.setProperty('--tw-accent', TWEAKS.accent);
+    r.setProperty('--tw-bg', TWEAKS.bg);
+    r.setProperty('--tw-bg-alt', TWEAKS.bgAlt);
+    r.setProperty('--tw-cover-scale', TWEAKS.coverScale + '%');
+    r.setProperty('--tw-title-font', '"' + TWEAKS.titleFont + '", Georgia, serif');
+    document.querySelectorAll('img[src*="copertina"]').forEach((img) => {
+      img.style.maxHeight = `calc(${TWEAKS.coverScale}% - 0px)`;
+      img.style.maxWidth = `calc(${TWEAKS.coverScale}% - 0px)`;
+    });
+  }
+
+  let tweakPanel = null;
+  function buildPanel() {
+    if (tweakPanel) return tweakPanel;
+    const p = document.createElement('div');
+    p.id = 'tweaks-panel';
+    p.innerHTML = `
+      <style>
+        #tweaks-panel { position: fixed; right: 20px; bottom: 20px; z-index: 999999;
+          width: 320px; background: #1A1714; color: #F2ECE0;
+          font-family: 'Inter', sans-serif; font-size: 13px;
+          padding: 18px 20px; border-radius: 4px; box-shadow: 0 20px 60px rgba(0,0,0,.5);
+          border: 1px solid rgba(242,236,224,.15); }
+        #tweaks-panel h3 { margin: 0 0 16px; font-family: 'Cormorant Garamond', serif;
+          font-size: 22px; font-weight: 400; letter-spacing: .05em;
+          color: var(--tw-accent, #C79A3E); }
+        #tweaks-panel label { display: block; margin: 14px 0 6px; font-size: 11px;
+          letter-spacing: .18em; text-transform: uppercase; color: #A89E8D; }
+        #tweaks-panel input[type="range"] { width: 100%; accent-color: var(--tw-accent); }
+        #tweaks-panel input[type="color"] { width: 100%; height: 32px; border: 1px solid #3A342E;
+          background: transparent; cursor: pointer; }
+        #tweaks-panel select { width: 100%; padding: 6px; background: #2A2420; color: #F2ECE0;
+          border: 1px solid #3A342E; font-family: inherit; font-size: 13px; }
+        #tweaks-panel .val { float: right; color: var(--tw-accent); font-variant-numeric: tabular-nums; }
+        #tweaks-panel .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      </style>
+      <h3>Tweaks</h3>
+      <label>Copertina — scala <span class="val" id="tw-scale-val">82%</span></label>
+      <input type="range" id="tw-scale" min="40" max="100" step="1" value="82" />
+      <div class="row">
+        <div>
+          <label>Accento</label>
+          <input type="color" id="tw-accent" value="#C79A3E" />
+        </div>
+        <div>
+          <label>Sfondo scuro</label>
+          <input type="color" id="tw-bgalt" value="#1A1714" />
+        </div>
+      </div>
+      <label>Sfondo crema</label>
+      <input type="color" id="tw-bg" value="#F2ECE0" />
+      <label>Font titoli</label>
+      <select id="tw-font">
+        <option>Cormorant Garamond</option>
+        <option>EB Garamond</option>
+        <option>Playfair Display</option>
+        <option>Lora</option>
+        <option>Georgia</option>
+      </select>
+    `;
+    document.body.appendChild(p);
+
+    const set = (k, v) => {
+      TWEAKS[k] = v;
+      applyTweaks();
+      try {
+        window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { [k]: v } }, '*');
+      } catch(e){}
+    };
+
+    p.querySelector('#tw-scale').addEventListener('input', (e) => {
+      const v = +e.target.value;
+      p.querySelector('#tw-scale-val').textContent = v + '%';
+      set('coverScale', v);
+    });
+    p.querySelector('#tw-accent').addEventListener('input', (e) => set('accent', e.target.value));
+    p.querySelector('#tw-bgalt').addEventListener('input', (e) => set('bgAlt', e.target.value));
+    p.querySelector('#tw-bg').addEventListener('input', (e) => set('bg', e.target.value));
+    p.querySelector('#tw-font').addEventListener('change', (e) => set('titleFont', e.target.value));
+
+    // Sync UI to current values
+    p.querySelector('#tw-scale').value = TWEAKS.coverScale;
+    p.querySelector('#tw-scale-val').textContent = TWEAKS.coverScale + '%';
+    p.querySelector('#tw-accent').value = TWEAKS.accent;
+    p.querySelector('#tw-bgalt').value = TWEAKS.bgAlt;
+    p.querySelector('#tw-bg').value = TWEAKS.bg;
+    p.querySelector('#tw-font').value = TWEAKS.titleFont;
+
+    tweakPanel = p;
+    return p;
+  }
+
+  // CSS hooks used by slide components (override palette + title font).
+  const styleEl = document.createElement('style');
+  styleEl.textContent = `
+    /* Cover image responds to --tw-cover-scale */
+    img[src*="copertina"] { max-height: var(--tw-cover-scale, 82%) !important;
+                            max-width: var(--tw-cover-scale, 82%) !important;
+                            height: auto !important; width: auto !important; }
+  `;
+  document.head.appendChild(styleEl);
+
+  applyTweaks();
+
+  // Register listener FIRST, then announce availability.
+  window.addEventListener('message', (e) => {
+    const d = e.data || {};
+    if (d.type === '__activate_edit_mode') {
+      buildPanel().style.display = 'block';
+    } else if (d.type === '__deactivate_edit_mode') {
+      if (tweakPanel) tweakPanel.style.display = 'none';
+    }
+  });
+  try { window.parent.postMessage({ type: '__edit_mode_available' }, '*'); } catch(e){}
+</script>
+
+<script>
+  // Poll until all external text/babel scripts have finished transpiling
+  // and exposed their Slide* components on window, then render.
+  (function () {
+    const names = [
+      'SlideCover','SlideEpigraph','SlideWhy','SlideMethod','SlideStructure',
+      'SlidePartI','SlideFotografoConsapevole','SlideTecnicaPresenza','SlideTreRespiri','SlideRelazioneImmagine','SlideCasoPaolo',
+      'SlidePartII','SlideDistanze','SlideDistanzaCorpo','SlideVoceSilenzio',
+      'SlidePartIII','SlideParolaSvela','SlideRapport','SlideAncore','SlideLuce',
+      'SlidePartIV','SlideMeditazione','SlideOcchio','SlidePerChi','SlideFine'
+    ];
+    let tries = 0;
+    function ready() { return names.every(n => typeof window[n] === 'function'); }
+    function tryRender() {
+      tries++;
+      if (ready()) {
+        names.forEach((n, i) => {
+          const el = document.getElementById('s' + (i + 1));
+          if (el) ReactDOM.createRoot(el).render(React.createElement(window[n]));
+        });
+        return;
+      }
+      if (tries < 300) setTimeout(tryRender, 50);
+      else console.error('Slide components did not load in time.');
+    }
+    tryRender();
+  })();
+</script>
+<script>
+(async () => {
+  try { await customElements.whenDefined('deck-stage'); } catch (e) {}
+  try { await document.fonts.ready; } catch (e) {}
+  setTimeout(() => { try { window.print(); } catch (e) {} }, 500);
+})();
+</script>
+</body>
+</html>
