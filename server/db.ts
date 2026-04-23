@@ -1,6 +1,6 @@
 import { eq, desc, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, photos, contacts, InsertPhoto, InsertContact, pdfs, InsertPdf, Pdf, purchases, InsertPurchase, subscribers, InsertSubscriber } from "../drizzle/schema";
+import { InsertUser, users, photos, contacts, InsertPhoto, InsertContact, pdfs, InsertPdf, Pdf, purchases, InsertPurchase, subscribers, InsertSubscriber, ebooks, InsertEbook, Ebook } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -247,4 +247,29 @@ export async function getAllSubscribers() {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(subscribers).orderBy(desc(subscribers.createdAt));
+}
+
+export async function getAllEbooks(): Promise<Ebook[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(ebooks).orderBy(desc(ebooks.createdAt));
+}
+
+export async function getEbookById(id: number): Promise<Ebook | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(ebooks).where(eq(ebooks.id, id)).limit(1);
+  return rows[0] ?? null;
+}
+
+export async function insertEbook(data: InsertEbook) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(ebooks).values(data);
+}
+
+export async function deleteEbook(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(ebooks).set({ active: false }).where(eq(ebooks.id, id));
 }

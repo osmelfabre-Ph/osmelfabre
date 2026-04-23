@@ -29,7 +29,12 @@ import {
   insertSubscriber,
   getAllSubscribers,
   upsertUser,
+  getAllEbooks,
+  getEbookById,
+  insertEbook,
+  deleteEbook,
 } from "./db";
+import { SignJWT } from "jose";
 import { notifyOwner } from "./_core/notification";
 import { createStripeProductForPdf, updateStripeProduct } from "./stripeProducts";
 import Stripe from "stripe";
@@ -607,6 +612,81 @@ export const appRouter = router({
     list: adminProcedure.query(async () => {
       return getAllSubscribers();
     }),
+  }),
+
+  ebooks: router({
+    // Admin: carica nuovo ebook HTML
+    upload: adminProcedure
+      .input(z.object({
+        title: z.string().min(1).max(256),
+        description: z.string().optional(),
+        dataUrl: z.string(), // base64 del file HTML
+        filename: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const matches = input.dataUrl.match(/^data:(.+);base64,(.+)$/);
+        if (!matches) throw new TRPCError({ code: "BAD_REQUEST", message: "File non valido" });
+        const buffer = Buffer.from(matches[2], "base64");
+        const fileKey = `osmel-ebooks/${Date.now()}-${Math.random().toString(36).slice(2)}.html`;
+        await storagePut(fileKey, buffer, "text/html; charset=utf-8");
+        await insertEbook({ title: input.title, description: input.description ?? null, fileKey });
+        return { success: true };
+      }),
+
+    // Admin: lista ebook
+    list: adminProcedure.query(async () => getAllEbooks()),
+
+    // Admin: elimina ebook
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await deleteEbook(input.id);
+        return { success: true };
+      }),
+
+    // Pubblico: richiede accesso con email → token JWT 7 giorni + MailerLite
+    requestAccess: publicProcedure
+      .input(z.object({
+        ebookId: z.number(),
+        email: z.string().email(),
+        name: z.string().max(256).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const ebook = await getEbookById(input.ebookId);
+        if (!ebook || !ebook.active) throw new TRPCError({ code: "NOT_FOUND", message: "Ebook non trovato" });
+
+        // Iscrizione MailerLite
+        const mailerLiteApiKey = process.env.MAILERLITE_API_KEY;
+        if (mailerLiteApiKey) {
+          try {
+            await fetch("https://connect.mailerlite.com/api/subscribers", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${mailerLiteApiKey}` },
+              body: JSON.stringify({ email: input.email, fields: { name: input.name ?? "" }, groups: ["newsletter"] }),
+            });
+          } catch (e) {
+            console.warn("[MailerLite] Errore iscrizione:", e);
+          }
+        }
+
+        // Genera token JWT con scadenza 7 giorni
+        const secret = new TextEncoder().encode(process.env.JWT_SECRET ?? "osmel-ebook-secret-2026");
+        const token = await new SignJWT({ ebookId: input.ebookId, email: input.email })
+          .setProtectedHeader({ alg: "HS256" })
+          .setExpirationTime("7d")
+          .sign(secret);
+
+        return { token, title: ebook.title };
+      }),
+
+    // Pubblico: info ebook (titolo, descrizione) per la pagina di accesso
+    info: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        const ebook = await getEbookById(input.id);
+        if (!ebook || !ebook.active) throw new TRPCError({ code: "NOT_FOUND", message: "Ebook non trovato" });
+        return { id: ebook.id, title: ebook.title, description: ebook.description };
+      }),
   }),
 });
 

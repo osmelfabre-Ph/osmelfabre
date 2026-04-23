@@ -112,3 +112,15 @@ export const subscribers = mysqlTable("subscribers", {
 
 export type Subscriber = typeof subscribers.$inferSelect;
 export type InsertSubscriber = typeof subscribers.$inferInsert;
+
+export const ebooks = mysqlTable("ebooks", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 256 }).notNull(),
+  description: text("description"),
+  fileKey: text("fileKey").notNull(),
+  active: boolean("active").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Ebook = typeof ebooks.$inferSelect;
+export type InsertEbook = typeof ebooks.$inferInsert;

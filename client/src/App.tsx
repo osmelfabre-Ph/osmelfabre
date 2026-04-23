@@ -17,6 +17,7 @@ import Workshop from "@/pages/Workshop";
 import PaymentSuccess from "@/pages/PaymentSuccess";
 import DownloadSuccess from "@/pages/DownloadSuccess";
 import DownloadFree from "@/pages/DownloadFree";
+import EbookAccess from "@/pages/EbookAccess";
 import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -51,6 +52,7 @@ function Router() {
         <Route path="/payment/success" component={PaymentSuccess} />
         <Route path="/download-success" component={DownloadSuccess} />
         <Route path="/download-free" component={DownloadFree} />
+        <Route path="/ebook/accedi" component={EbookAccess} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>

@@ -9,6 +9,8 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { registerStripeWebhook } from "../stripeWebhook";
 import { storageGet } from "../storage";
+import { getEbookById } from "../db";
+import { jwtVerify } from "jose";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -91,6 +93,32 @@ ${pages.map(p => `  <url>
       res.redirect(302, url);
     } catch {
       res.status(404).send("Not found");
+    }
+  });
+
+  // Ebook reader — valida JWT e serve il contenuto HTML dall'R2
+  app.get("/ebook/leggi", async (req, res) => {
+    const token = req.query.token as string | undefined;
+    if (!token) return res.status(401).send("Accesso non autorizzato");
+
+    try {
+      const secret = new TextEncoder().encode(process.env.JWT_SECRET ?? "osmel-ebook-secret-2026");
+      const { payload } = await jwtVerify(token, secret);
+      const ebookId = payload.ebookId as number;
+
+      const ebook = await getEbookById(ebookId);
+      if (!ebook || !ebook.active) return res.status(404).send("Ebook non trovato");
+
+      const { url: signedUrl } = await storageGet(ebook.fileKey);
+      const response = await fetch(signedUrl);
+      if (!response.ok) return res.status(502).send("Contenuto non disponibile");
+
+      const html = await response.text();
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.setHeader("X-Robots-Tag", "noindex");
+      res.send(html);
+    } catch {
+      res.status(401).send("Link non valido o scaduto. Richiedi un nuovo link.");
     }
   });
 

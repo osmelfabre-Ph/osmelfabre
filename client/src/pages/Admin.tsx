@@ -719,11 +719,133 @@ function SubscribersList() {
   );
 }
 
+// ── Ebook Manager ─────────────────────────────────────────────────────────────
+function EbookManager() {
+  const utils = trpc.useUtils();
+  const { data: ebooks, isLoading } = trpc.ebooks.list.useQuery();
+  const [showForm, setShowForm] = useState(false);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const upload = trpc.ebooks.upload.useMutation({
+    onSuccess: () => {
+      toast.success("Ebook caricato!");
+      setTitle(""); setDescription(""); setFile(null); setShowForm(false);
+      utils.ebooks.list.invalidate();
+    },
+    onError: (e) => toast.error(`Errore: ${e.message}`),
+  });
+
+  const deleteEbook = trpc.ebooks.delete.useMutation({
+    onSuccess: () => { toast.success("Ebook eliminato"); utils.ebooks.list.invalidate(); },
+    onError: (e) => toast.error(`Errore: ${e.message}`),
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title || !file) { toast.error("Titolo e file sono obbligatori"); return; }
+    const dataUrl = await fileToDataUrl(file);
+    upload.mutate({ title, description: description || undefined, dataUrl, filename: file.name });
+  };
+
+  const baseUrl = "https://www.osmelfabre.it";
+
+  if (isLoading) return <div className="text-center py-12 font-['Jost'] text-sm text-muted-foreground">Caricamento...</div>;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-8">
+        <p className="font-['Jost'] text-xs tracking-[0.2em] uppercase text-muted-foreground">{ebooks?.length ?? 0} ebook</p>
+        <button onClick={() => setShowForm(!showForm)}
+          className="font-['Jost'] text-xs tracking-[0.2em] uppercase border border-primary text-primary px-6 py-3 hover:bg-primary hover:text-primary-foreground transition-colors duration-300"
+        >
+          {showForm ? "Annulla" : "+ Nuovo ebook"}
+        </button>
+      </div>
+
+      {showForm && (
+        <form onSubmit={handleSubmit} className="border border-border p-8 mb-10 space-y-5">
+          <h3 className="font-['Cormorant_Garamond'] text-2xl font-light mb-4">Carica ebook HTML</h3>
+          <div>
+            <label className="block font-['Jost'] text-xs tracking-[0.15em] uppercase text-muted-foreground mb-2">Titolo *</label>
+            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required
+              className="w-full bg-card border border-border text-foreground font-['Jost'] text-sm px-4 py-3 focus:outline-none focus:border-primary" />
+          </div>
+          <div>
+            <label className="block font-['Jost'] text-xs tracking-[0.15em] uppercase text-muted-foreground mb-2">Descrizione</label>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3}
+              className="w-full bg-card border border-border text-foreground font-['Jost'] text-sm px-4 py-3 focus:outline-none focus:border-primary resize-none" />
+          </div>
+          {/* Drop zone */}
+          <div
+            onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(e) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) setFile(f); }}
+            onClick={() => fileRef.current?.click()}
+            className={`border-2 border-dashed cursor-pointer flex flex-col items-center justify-center gap-2 py-8 transition-colors ${
+              dragging ? "border-primary bg-primary/5" : file ? "border-green-600 bg-green-900/10" : "border-border hover:border-primary/50"
+            }`}
+          >
+            {file ? (
+              <p className="font-['Jost'] text-sm text-green-400">✓ {file.name}</p>
+            ) : (
+              <>
+                <p className="font-['Jost'] text-sm text-muted-foreground">Trascina il file HTML o <span className="text-primary underline">sfoglia</span></p>
+                <p className="font-['Jost'] text-xs text-muted-foreground/50">Solo file .html</p>
+              </>
+            )}
+            <input ref={fileRef} type="file" accept=".html,text/html" className="hidden"
+              onChange={(e) => e.target.files?.[0] && setFile(e.target.files[0])} />
+          </div>
+          <button type="submit" disabled={upload.isPending || !title || !file}
+            className="w-full py-4 font-['Jost'] text-xs tracking-[0.25em] uppercase border border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors disabled:opacity-40"
+          >
+            {upload.isPending ? "Caricamento..." : "Carica ebook"}
+          </button>
+        </form>
+      )}
+
+      <div className="space-y-4">
+        {ebooks?.map((ebook) => {
+          const accessUrl = `${baseUrl}/ebook/accedi?id=${ebook.id}`;
+          return (
+            <div key={ebook.id} className="border border-border p-6">
+              <div className="flex items-start justify-between gap-4 mb-3">
+                <div>
+                  <p className="font-['Cormorant_Garamond'] text-xl text-foreground">{ebook.title}</p>
+                  {ebook.description && <p className="font-['Jost'] text-xs text-muted-foreground mt-1">{ebook.description}</p>}
+                </div>
+                <button onClick={() => { if (confirm("Eliminare questo ebook?")) deleteEbook.mutate({ id: ebook.id }); }}
+                  className="font-['Jost'] text-[10px] tracking-[0.15em] uppercase text-red-400 hover:text-red-300 border border-red-800/50 px-3 py-1.5 shrink-0"
+                >Elimina</button>
+              </div>
+              {/* Link da usare su ManyChat */}
+              <div className="bg-card border border-border/50 px-4 py-3 flex items-center gap-3">
+                <p className="font-['Jost'] text-[10px] tracking-[0.15em] uppercase text-primary shrink-0">Link ManyChat</p>
+                <p className="font-['Jost'] text-xs text-muted-foreground truncate flex-1">{accessUrl}</p>
+                <button onClick={() => { navigator.clipboard.writeText(accessUrl); toast.success("Copiato!"); }}
+                  className="font-['Jost'] text-[10px] tracking-[0.15em] uppercase text-foreground border border-border px-3 py-1.5 hover:border-primary shrink-0"
+                >Copia</button>
+              </div>
+            </div>
+          );
+        })}
+        {ebooks?.length === 0 && (
+          <p className="text-center py-12 font-['Jost'] text-sm text-muted-foreground">Nessun ebook caricato</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Main Admin Page ────────────────────────────────────────────────────────────
 export default function Admin() {
   const { user, loading } = useAuth();
   const utils = trpc.useUtils();
-  const [tab, setTab] = useState<"upload" | "photos" | "contacts" | "pdfs" | "subscribers">("photos");
+  const [tab, setTab] = useState<"upload" | "photos" | "contacts" | "pdfs" | "subscribers" | "ebooks">("photos");
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
@@ -772,6 +894,7 @@ export default function Admin() {
           { key: "pdfs", label: "PDF" },
           { key: "contacts", label: "Messaggi" },
           { key: "subscribers", label: "Newsletter" },
+          { key: "ebooks", label: "Ebook HTML" },
         ] as const).map((t) => (
           <button
             key={t.key}
@@ -792,6 +915,7 @@ export default function Admin() {
         {tab === "contacts" && <ContactsList />}
         {tab === "pdfs" && <PdfManager />}
         {tab === "subscribers" && <SubscribersList />}
+        {tab === "ebooks" && <EbookManager />}
       </div>
     </div>
   );
