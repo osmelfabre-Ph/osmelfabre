@@ -114,9 +114,58 @@ ${pages.map(p => `  <url>
       if (!response.ok) return res.status(502).send("Contenuto non disponibile");
 
       const html = await response.text();
+
+      const readerCss = `<style>
+        @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=Jost:wght@300;400&display=swap');
+        *, *::before, *::after { box-sizing: border-box; }
+        html { font-size: 18px; background: #1a1a18; color: #f0ebe0; }
+        body {
+          font-family: 'Lora', Georgia, serif;
+          line-height: 1.85;
+          max-width: 680px;
+          margin: 0 auto;
+          padding: 2.5rem 1.5rem 5rem;
+        }
+        h1, h2, h3, h4 {
+          font-family: 'Jost', sans-serif;
+          font-weight: 400;
+          letter-spacing: 0.05em;
+          line-height: 1.3;
+          margin-top: 2.5em;
+          color: #f5f0e8;
+        }
+        h1 { font-size: 1.9rem; margin-top: 1em; }
+        h2 { font-size: 1.4rem; color: #c4704a; }
+        h3 { font-size: 1.1rem; }
+        p { margin: 0 0 1.4em; color: #d8d0c0; }
+        strong, b { color: #f5f0e8; font-weight: 500; }
+        em, i { color: #c4a882; }
+        blockquote {
+          border-left: 2px solid #c4704a;
+          margin: 2em 0;
+          padding: 0.5em 0 0.5em 1.5em;
+          font-style: italic;
+          color: #c4a882;
+        }
+        a { color: #c4704a; text-underline-offset: 3px; }
+        img { max-width: 100%; height: auto; display: block; margin: 2em auto; }
+        hr { border: none; border-top: 1px solid #3a3a36; margin: 3em 0; }
+        ul, ol { padding-left: 1.5em; margin-bottom: 1.4em; }
+        li { margin-bottom: 0.5em; color: #d8d0c0; }
+        @media (max-width: 480px) {
+          html { font-size: 16px; }
+          body { padding: 1.5rem 1.25rem 4rem; }
+        }
+      </style>`;
+
+      // Inietta il CSS: se c'è già un <head>, lo aggiunge lì; altrimenti in cima
+      const injected = html.includes("</head>")
+        ? html.replace("</head>", `${readerCss}</head>`)
+        : readerCss + html;
+
       res.setHeader("Content-Type", "text/html; charset=utf-8");
       res.setHeader("X-Robots-Tag", "noindex");
-      res.send(html);
+      res.send(injected);
     } catch {
       res.status(401).send("Link non valido o scaduto. Richiedi un nuovo link.");
     }
