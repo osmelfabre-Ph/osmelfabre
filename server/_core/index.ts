@@ -114,17 +114,9 @@ ${pages.map(p => `  <url>
       if (!response.ok) return res.status(502).send("Contenuto non disponibile");
 
       const html = await response.text();
-
-      const viewportTag = `<meta name="viewport" content="width=device-width, initial-scale=1.0">`;
-      const injected = html.includes("<meta name=\"viewport\"")
-        ? html
-        : html.includes("</head>")
-          ? html.replace("</head>", `${viewportTag}</head>`)
-          : html.replace("<head>", `<head>${viewportTag}`);
-
       res.setHeader("Content-Type", "text/html; charset=utf-8");
       res.setHeader("X-Robots-Tag", "noindex");
-      res.send(injected);
+      res.send(html);
     } catch {
       res.status(401).send("Link non valido o scaduto. Richiedi un nuovo link.");
     }
