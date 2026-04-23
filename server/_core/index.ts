@@ -114,9 +114,15 @@ ${pages.map(p => `  <url>
       if (!response.ok) return res.status(502).send("Contenuto non disponibile");
 
       const html = await response.text();
+
+      const mobilefix = `<meta name="viewport" content="width=device-width, initial-scale=1.0"><style>@media(max-width:768px){body{min-width:0!important;width:100%!important;padding-left:1.25rem!important;padding-right:1.25rem!important;box-sizing:border-box!important;}*{max-width:100%!important;min-width:0!important;}}</style>`;
+      const injected = html.includes("</head>")
+        ? html.replace("</head>", `${mobilefix}</head>`)
+        : mobilefix + html;
+
       res.setHeader("Content-Type", "text/html; charset=utf-8");
       res.setHeader("X-Robots-Tag", "noindex");
-      res.send(html);
+      res.send(injected);
     } catch {
       res.status(401).send("Link non valido o scaduto. Richiedi un nuovo link.");
     }
