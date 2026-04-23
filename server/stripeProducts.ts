@@ -64,6 +64,7 @@ export async function createStripeProductForPdf({
         url: `${origin}/download-success?session_id={CHECKOUT_SESSION_ID}&pdf_id=${pdfId}`,
       },
     },
+    billing_address_collection: "required",
     metadata: {
       pdf_id: String(pdfId),
     },
