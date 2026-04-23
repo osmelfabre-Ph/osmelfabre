@@ -405,6 +405,11 @@ function PdfManager() {
     onError: (e) => toast.error(`Errore: ${e.message}`),
   });
 
+  const generateStripeLink = trpc.pdfs.generateStripeLink.useMutation({
+    onSuccess: () => { toast.success("Link Stripe generato!"); utils.pdfs.list.invalidate(); },
+    onError: (e) => toast.error(`Errore Stripe: ${e.message}`),
+  });
+
   // ManyChat
   const [manychatPdfId, setManychatPdfId] = useState<number | null>(null);
   const [manychatKeyword, setManychatKeyword] = useState("");
@@ -607,21 +612,45 @@ function PdfManager() {
                 )}
               </div>
               {pdf.description && <p className="font-['Jost'] text-xs text-muted-foreground leading-relaxed mb-2 line-clamp-2">{pdf.description}</p>}
-              <div className="flex gap-4 flex-wrap">
-                {pdf.price && <span className="font-['Cormorant_Garamond'] text-lg text-primary">€ {pdf.price}</span>}
+              <div className="flex gap-4 flex-wrap items-center">
+                {pdf.price && pdf.price !== "0" && <span className="font-['Cormorant_Garamond'] text-lg text-primary">€ {pdf.price}</span>}
+                {pdf.isFree && <span className="font-['Jost'] text-[10px] tracking-[0.15em] uppercase text-green-400">Gratuito</span>}
                 {pdf.stripePaymentLink && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(pdf.stripePaymentLink!);
-                    toast.success("Link copiato negli appunti!");
-                  }}
-                  className="font-['Jost'] text-[10px] text-primary/70 hover:text-primary underline underline-offset-2 truncate max-w-xs transition-colors"
-                  title={pdf.stripePaymentLink}
-                >
-                  🔗 Copia link Stripe
-                </button>
-              )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(pdf.stripePaymentLink!);
+                      toast.success("Link Stripe copiato!");
+                    }}
+                    className="font-['Jost'] text-[10px] text-primary/70 hover:text-primary underline underline-offset-2 truncate max-w-xs transition-colors"
+                    title={pdf.stripePaymentLink}
+                  >
+                    🔗 Copia link Stripe
+                  </button>
+                )}
+                {pdf.isFree && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`https://www.osmelfabre.it/download-free?id=${pdf.id}`);
+                      toast.success("Link download copiato!");
+                    }}
+                    className="font-['Jost'] text-[10px] text-green-400/80 hover:text-green-400 underline underline-offset-2 truncate max-w-xs transition-colors"
+                    title={`https://www.osmelfabre.it/download-free?id=${pdf.id}`}
+                  >
+                    🔗 Copia link gratuito
+                  </button>
+                )}
+                {!pdf.isFree && !pdf.stripePaymentLink && pdf.price && parseFloat(pdf.price) > 0 && (
+                  <button
+                    type="button"
+                    disabled={generateStripeLink.isPending}
+                    onClick={() => generateStripeLink.mutate({ id: pdf.id, origin: window.location.origin })}
+                    className="font-['Jost'] text-[10px] tracking-[0.15em] uppercase text-orange-400 hover:text-orange-300 border border-orange-700/50 px-3 py-1 transition-colors disabled:opacity-40"
+                  >
+                    {generateStripeLink.isPending ? "Generazione..." : "⚡ Genera link Stripe"}
+                  </button>
+                )}
               </div>
               <p className="font-['Jost'] text-[10px] text-muted-foreground mt-2">
                 {new Date(pdf.createdAt).toLocaleDateString("it-IT", { day: "2-digit", month: "long", year: "numeric" })}
@@ -653,35 +682,44 @@ function PdfManager() {
           </div>
 
           {/* ManyChat panel */}
-          {manychatPdfId === pdf.id && (
-            <div className="mt-3 border border-orange-700/30 bg-orange-900/10 p-4">
-              <p className="font-['Jost'] text-[10px] tracking-[0.2em] uppercase text-orange-400 mb-3">Attiva automazione ManyChat</p>
-              <p className="font-['Jost'] text-xs text-muted-foreground mb-3 leading-relaxed">
-                Inserisci la parola chiave che userai nel post Instagram/Facebook. Il sistema aggiornerà automaticamente il link Stripe su ManyChat.
-              </p>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={manychatKeyword}
-                  onChange={(e) => setManychatKeyword(e.target.value.toUpperCase())}
-                  placeholder="Es. RITRATTO2025"
-                  className="flex-1 bg-transparent border border-border px-3 py-2 font-['Jost'] text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-orange-500 uppercase"
-                />
-                <button
-                  type="button"
-                  disabled={!manychatKeyword.trim() || activateFlow.isPending}
-                  onClick={() => activateFlow.mutate({ pdfId: pdf.id, keyword: manychatKeyword.trim() })}
-                  className="font-['Jost'] text-[10px] tracking-[0.15em] uppercase bg-orange-700 text-white px-4 py-2 hover:bg-orange-600 disabled:opacity-40 transition-colors shrink-0">
-                  {activateFlow.isPending ? "Attivazione..." : "Attiva"}
-                </button>
+          {manychatPdfId === pdf.id && (() => {
+            const effectiveLink = pdf.isFree
+              ? `https://www.osmelfabre.it/download-free?id=${pdf.id}`
+              : pdf.stripePaymentLink;
+            return (
+              <div className="mt-3 border border-orange-700/30 bg-orange-900/10 p-4">
+                <p className="font-['Jost'] text-[10px] tracking-[0.2em] uppercase text-orange-400 mb-3">Attiva automazione ManyChat</p>
+                <p className="font-['Jost'] text-xs text-muted-foreground mb-3 leading-relaxed">
+                  Inserisci la parola chiave che userai nel post Instagram/Facebook. Il sistema aggiornerà il link su ManyChat.
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={manychatKeyword}
+                    onChange={(e) => setManychatKeyword(e.target.value.toUpperCase())}
+                    placeholder="Es. RITRATTO2025"
+                    className="flex-1 bg-transparent border border-border px-3 py-2 font-['Jost'] text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-orange-500 uppercase"
+                  />
+                  <button
+                    type="button"
+                    disabled={!manychatKeyword.trim() || activateFlow.isPending || !effectiveLink}
+                    onClick={() => activateFlow.mutate({ pdfId: pdf.id, keyword: manychatKeyword.trim() })}
+                    className="font-['Jost'] text-[10px] tracking-[0.15em] uppercase bg-orange-700 text-white px-4 py-2 hover:bg-orange-600 disabled:opacity-40 transition-colors shrink-0">
+                    {activateFlow.isPending ? "Attivazione..." : "Attiva"}
+                  </button>
+                </div>
+                {effectiveLink ? (
+                  <p className="font-['Jost'] text-[10px] text-orange-400/70 mt-2">
+                    Link pronto: {effectiveLink.length > 60 ? effectiveLink.slice(0, 60) + "..." : effectiveLink}
+                  </p>
+                ) : (
+                  <p className="font-['Jost'] text-[10px] text-red-400/70 mt-2">
+                    ⚠ Nessun link trovato. {pdf.price && parseFloat(pdf.price) > 0 ? "Genera prima il link Stripe." : "Imposta un prezzo e genera il link Stripe."}
+                  </p>
+                )}
               </div>
-              {pdf.stripePaymentLink ? (
-                <p className="font-['Jost'] text-[10px] text-orange-400/70 mt-2">Link Stripe pronto: {pdf.stripePaymentLink.slice(0, 50)}...</p>
-              ) : (
-                <p className="font-['Jost'] text-[10px] text-red-400/70 mt-2">⚠ Nessun link Stripe trovato per questo PDF. Caricalo prima di attivare.</p>
-              )}
-            </div>
-          )}
+            );
+          })()}
           </React.Fragment>
         ))}
       </div>

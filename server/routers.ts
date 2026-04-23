@@ -510,6 +510,34 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    // Admin: genera link Stripe per un PDF a pagamento che non ce l'ha ancora
+    generateStripeLink: adminProcedure
+      .input(z.object({ id: z.number(), origin: z.string().optional() }))
+      .mutation(async ({ input, ctx }) => {
+        const pdf = await getPdfById(input.id);
+        if (!pdf) throw new TRPCError({ code: "NOT_FOUND", message: "PDF non trovato" });
+        if (pdf.isFree) throw new TRPCError({ code: "BAD_REQUEST", message: "Il PDF è gratuito, non serve un link Stripe" });
+        if (pdf.stripePaymentLink) throw new TRPCError({ code: "BAD_REQUEST", message: "Link Stripe già presente" });
+        if (!pdf.price || parseFloat(pdf.price) <= 0) throw new TRPCError({ code: "BAD_REQUEST", message: "Imposta prima un prezzo valido" });
+
+        const origin = input.origin ?? (ctx.req.headers.origin as string | undefined) ?? "https://osmelfabre.it";
+        const priceInCents = Math.round(parseFloat(pdf.price) * 100);
+        const stripeResult = await createStripeProductForPdf({
+          title: pdf.title,
+          description: pdf.description ?? undefined,
+          priceInCents,
+          pdfId: pdf.id,
+          origin,
+          coverUrl: pdf.coverUrl ?? undefined,
+        });
+        await updatePdf(pdf.id, {
+          stripePaymentLink: stripeResult.paymentLink,
+          stripeProductId: stripeResult.productId,
+          stripePriceId: stripeResult.priceId,
+        });
+        return { stripePaymentLink: stripeResult.paymentLink };
+      }),
+
     // Admin: list all purchases
     purchases: adminProcedure.query(async () => {
       return getAllPurchases();
