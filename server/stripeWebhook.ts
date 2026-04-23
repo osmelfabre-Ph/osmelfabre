@@ -1,6 +1,6 @@
 import express, { type Express } from "express";
 import Stripe from "stripe";
-import { insertPurchase, getPurchaseBySessionId, getLatestPdf } from "./db";
+import { insertPurchase, getPurchaseBySessionId, getLatestPdf, getPdfById } from "./db";
 import { notifyOwner } from "./_core/notification";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -119,6 +119,8 @@ export function registerStripeWebhook(app: Express) {
           downloadCount: 0,
         });
 
+        const purchasedPdf = await getPdfById(pdfId);
+
         // ── Iscrizione automatica MailerLite ──────────────────────────────────
         if (customerEmail) {
           await subscribeToMailerLite(customerEmail, customerName);
@@ -126,7 +128,7 @@ export function registerStripeWebhook(app: Express) {
 
         await notifyOwner({
           title: `Nuovo acquisto PDF!`,
-          content: `**Email:** ${customerEmail ?? "—"}\n**Nome:** ${customerName ?? "—"}\n**Sessione Stripe:** ${session.id}`,
+          content: `**PDF:** ${purchasedPdf?.title ?? `ID ${pdfId}`}\n**Email:** ${customerEmail ?? "—"}\n**Nome:** ${customerName ?? "—"}\n**Importo:** € ${purchasedPdf?.price ?? "—"}`,
         });
 
         console.log(`[Stripe Webhook] Purchase recorded for session ${session.id}`);
